@@ -4,8 +4,6 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import "hardhat/console.sol";
 
-//partical implementation credit to https://github.com/saanvijay/ReviewSystem/blob/main/contracts/review.sol
-
 /**
  * @title Review
  * @dev A transaction with review from buyer
@@ -51,40 +49,21 @@ contract ReviewSystem{
 
     mapping(uint => mapping(address => Review)) reviewDetail;
 
+    // events
     event addTransactEvent( uint id);
 
     event addAssetEvent( uint id, string name);
 
     event reviewAssetEvent( uint id, uint rating);
 
-    /**
-     * @dev Set contract deployer as owner
-     */
     constructor() {
         console.log("Owner contract deployed by:", msg.sender);
         TotalAsset = 0;
     }
 
     /**
-     * @dev Transact purchase for an asset
-     */
-    function transact(uint assetId) payable public{
-        newTransact.assetId = assetId;
-        newTransact.value = msg.value;
-        newTransact.buyer = msg.sender;
-
-        Asset storage oldAsset = assetDetail[assetId];
-        address priorOwner = oldAsset.owners[oldAsset.owners.length - 1];
-        newTransact.seller = priorOwner;
-
-        oldAsset.dealDone = true;
-        oldAsset.owners.push(msg.sender);
-
-        transactDetail[assetId][msg.sender] = newTransact;
-
-        emit addTransactEvent(assetId);
-    }
-
+    * @dev Add an asset
+    */
     function addAsset(string memory name, uint price, string memory hash) public {
         require(keccak256(bytes(name)) != keccak256(""), "Asset Name required !");
 
@@ -113,6 +92,34 @@ contract ReviewSystem{
     
     function getAsset(uint id) public returns(string memory, uint, uint, uint, bool, address) {
         return (assetDetail[id].name, assetDetail[id].price, assetDetail[id].rating, assetDetail[id].totalReviewed, assetDetail[id].dealDone, assetDetail[id].owners[assetDetail[id].owners.length]);
+    }
+
+    function getAllAssetids() public returns (uint[] memory) {
+        return AssetIds;
+    }
+
+    function getAllOwnersForAsset(uint id) public returns (address[] memory){
+       return assetDetail[id].owners;
+    }
+
+    /**
+     * @dev Transact purchase for an asset
+     */
+    function transact(uint assetId) payable public{
+        newTransact.assetId = assetId;
+        newTransact.value = msg.value;
+        newTransact.buyer = msg.sender;
+
+        Asset storage oldAsset = assetDetail[assetId];
+        address priorOwner = oldAsset.owners[oldAsset.owners.length - 1];
+        newTransact.seller = priorOwner;
+
+        oldAsset.dealDone = true;
+        oldAsset.owners.push(msg.sender);
+
+        transactDetail[assetId][msg.sender] = newTransact;
+
+        emit addTransactEvent(assetId);
     }
 
     /**
@@ -170,14 +177,6 @@ contract ReviewSystem{
          
          return reviewDetail[id][user].dateOfReview;
          
-    }
-    
-    function getAllAssetids() public returns (uint[] memory) {
-        return AssetIds;
-    }
-
-    function getAllOwnersForAsset(uint id) public returns (address[] memory){
-       return assetDetail[id].owners;
     }
 
 }
